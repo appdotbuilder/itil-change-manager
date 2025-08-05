@@ -1,9 +1,19 @@
 
+import { db } from '../db';
+import { changeRequestsTable } from '../db/schema';
 import { type ChangeRequest } from '../schema';
+import { desc } from 'drizzle-orm';
 
 export const getChangeRequests = async (): Promise<ChangeRequest[]> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all change requests from the database.
-    // Should return a list of all change requests ordered by creation date (newest first).
-    return Promise.resolve([]);
+  try {
+    const results = await db.select()
+      .from(changeRequestsTable)
+      .orderBy(desc(changeRequestsTable.created_at))
+      .execute();
+
+    return results;
+  } catch (error) {
+    console.error('Failed to get change requests:', error);
+    throw error;
+  }
 };

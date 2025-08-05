@@ -1,30 +1,38 @@
 
+import { db } from '../db';
+import { changeRequestsTable } from '../db/schema';
 import { type UpdateChangeRequestInput, type ChangeRequest } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const updateChangeRequest = async (input: UpdateChangeRequestInput): Promise<ChangeRequest> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is updating an existing change request in the database.
-    // Should validate input, update the database record, set updated_at timestamp, and return the updated change request.
-    // Should throw an error if the change request is not found.
-    return Promise.resolve({
-        id: input.id,
-        title: 'Placeholder',
-        description: 'Placeholder',
-        change_type: 'normal' as const,
-        priority: 'medium' as const,
-        status: 'draft' as const,
-        requester_name: 'Placeholder',
-        requester_email: 'placeholder@example.com',
-        business_justification: 'Placeholder',
-        implementation_plan: 'Placeholder',
-        rollback_plan: 'Placeholder',
-        risk_assessment: null,
-        impact_assessment: null,
-        scheduled_start: null,
-        scheduled_end: null,
-        actual_start: null,
-        actual_end: null,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as ChangeRequest);
+  try {
+    // Check if change request exists
+    const existing = await db.select()
+      .from(changeRequestsTable)
+      .where(eq(changeRequestsTable.id, input.id))
+      .execute();
+
+    if (existing.length === 0) {
+      throw new Error(`Change request with id ${input.id} not found`);
+    }
+
+    // Prepare update data, excluding id and setting updated_at
+    const { id, ...updateData } = input;
+    const updateValues = {
+      ...updateData,
+      updated_at: new Date()
+    };
+
+    // Update the change request
+    const result = await db.update(changeRequestsTable)
+      .set(updateValues)
+      .where(eq(changeRequestsTable.id, input.id))
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Change request update failed:', error);
+    throw error;
+  }
 };
